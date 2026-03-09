@@ -256,6 +256,13 @@
                             <Pencil class="w-3.5 h-3.5" />
                             แก้ไขข้อมูล
                         </button>
+                        <button
+                            @click="openRemarkModal(entry)"
+                            class="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-amber-50 text-amber-700 rounded-xl text-xs font-semibold border border-amber-100 active:scale-95 transition-all"
+                        >
+                            <MessageSquare class="w-3.5 h-3.5 text-amber-500" />
+                            หมายเหตุ
+                        </button>
                     </div>
                 </div>
             </div>
