@@ -127,6 +127,7 @@ function normalizeEntry(e: any): BudgetEntry {
     ...e,
     status: mapToFourStatus(e.status as string),
     budget_requested: Number(e.budget_requested) || 0,
+    budget_received: Number(e.budget_received) || 0,
   } as BudgetEntry;
 }
 

@@ -11,7 +11,7 @@
                     </div>
                     <div>
                         <p class="brand-title">ระบบเสนองบประมาณ</p>
-                        <p class="brand-sub">เป็นโรงพยาบาลสระโบสถ์</p>
+                        <p class="brand-sub">โรงพยาบาลสระโบสถ์</p>
                     </div>
                 </div>
 

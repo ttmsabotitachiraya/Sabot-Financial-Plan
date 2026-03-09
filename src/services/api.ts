@@ -116,6 +116,7 @@ export const MOCK_ENTRIES: BudgetEntry[] = [
     title: "ติดตั้งระบบ Air เพิ่มเติมชั้น 2",
     location: "ตึก OPD ใหม่",
     budget_requested: 250000,
+    budget_received: 100000,
     priority: "แดง",
     description:
       "ระบบแอร์ชั้น 2 ชำรุด ส่งผลให้ผู้ป่วยรู้สึกไม่สบาย โดยเฉพาะในช่วงฤดูร้อน ควรเร่งดำเนินการก่อนฤดูร้อนถัดไป",
@@ -128,6 +129,7 @@ export const MOCK_ENTRIES: BudgetEntry[] = [
     title: "ปรับปรุงห้องน้ำผู้ป่วยนอก",
     location: "ตึก OPD เก่า",
     budget_requested: 120000,
+    budget_received: 0,
     priority: "เหลือง",
     description:
       "ห้องน้ำมีอายุการใช้งานมากกว่า 15 ปี มีกลิ่น และสภาพชำรุด ต้องการปรับปรุงพื้นกระเบื้องและระบบระบายอากาศ",
@@ -140,6 +142,7 @@ export const MOCK_ENTRIES: BudgetEntry[] = [
     title: "จัดซื้อเครื่องมือแพทย์ใหม่",
     location: "ตึก OPD ใหม่",
     budget_requested: 850000,
+    budget_received: 850000,
     priority: "แดง",
     description:
       "เครื่องตรวจ EKG เก่ามีปัญหาบ่อยครั้ง ส่งผลต่อการวินิจฉัยโรค ควรจัดซื้อเครื่องใหม่เพื่อรองรับผู้ป่วย",
@@ -152,6 +155,7 @@ export const MOCK_ENTRIES: BudgetEntry[] = [
     title: "ปรับปรุงครัวกลาง",
     location: "ตึกโภชนาการ",
     budget_requested: 380000,
+    budget_received: 200000,
     priority: "เหลือง",
     description:
       "ต้องการปรับปรุงพื้นที่ครัวกลาง เพิ่มอุปกรณ์ครัวอุตสาหกรรม และระบบระบายควันที่มีประสิทธิภาพมากขึ้น",
@@ -164,6 +168,7 @@ export const MOCK_ENTRIES: BudgetEntry[] = [
     title: "ติดตั้งป้ายบอกทางภายในอาคาร",
     location: "ตึก OPD เก่า",
     budget_requested: 45000,
+    budget_received: 45000,
     priority: "เขียว",
     description:
       "ผู้ป่วยและญาติมักหลงทางภายในอาคาร ต้องการติดตั้งป้ายบอกทางที่ชัดเจนเป็นภาษาไทยและอังกฤษ",
@@ -176,6 +181,7 @@ export const MOCK_ENTRIES: BudgetEntry[] = [
     title: "จัดซื้อรถเข็นผู้ป่วยเพิ่มเติม",
     location: "อื่นๆ",
     budget_requested: 90000,
+    budget_received: 0,
     priority: "เขียว",
     description:
       "รถเข็นมีไม่เพียงพอในช่วง Peak Hours โดยเฉพาะช่วงเช้า ต้องการจัดซื้อเพิ่มอีก 20 คัน",
@@ -188,6 +194,7 @@ export const MOCK_ENTRIES: BudgetEntry[] = [
     title: "ปรับปรุงระบบไฟฟ้าสำรอง",
     location: "ตึก OPD ใหม่",
     budget_requested: 620000,
+    budget_received: 0,
     priority: "แดง",
     description:
       "ระบบ UPS และ Generator สำรองมีอายุมาก เกิดปัญหาไฟดับกะทันหัน 3 ครั้งในปีที่ผ่านมา ต้องเร่งดำเนินการ",
@@ -201,6 +208,7 @@ export const MOCK_ENTRIES: BudgetEntry[] = [
     title: "จัดทำโครงการอาหารเสริมโภชนาการผู้ป่วย",
     location: "ตึกโภชนาการ",
     budget_requested: 175000,
+    budget_received: 50000,
     priority: "เขียว",
     description:
       "พัฒนาเมนูอาหารให้หลากหลายและมีคุณค่าทางโภชนาการมากขึ้น สำหรับผู้ป่วยที่พักรักษาตัวในโรงพยาบาล",

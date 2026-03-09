@@ -525,7 +525,11 @@ const displayEntries = computed(() => {
         (store.filteredEntries && store.filteredEntries.value) ||
         store.state.entries ||
         [];
-    return base.filter((e: BudgetEntry) => e.status === "รอเงิน");
+    // Show both projects that are waiting for funds ("รอเงิน")
+    // and projects that already have funds ("มีเงินแล้ว") on the dashboard
+    return base.filter(
+        (e: BudgetEntry) => e.status === "รอเงิน" || e.status === "มีเงินแล้ว",
+    );
 });
 </script>
 

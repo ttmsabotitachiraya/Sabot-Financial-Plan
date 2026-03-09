@@ -26,5 +26,3 @@ dist-ssr
 #environment
 .env
 .env.example
-
-gas

@@ -176,12 +176,17 @@
                         <!-- Second line: priority and financial status under building -->
                         <div class="mt-2 flex items-center gap-2">
                             <span
-                                class="flex items-center gap-1 font-semibold px-2 py-0.5 rounded-full border text-xs"
-                                :class="getPriorityClass(entry.priority)"
-                            >
-                                {{ getPriorityEmoji(entry.priority) }}
-                                {{ entry.priority }}
-                            </span>
+                                class="w-5 h-5 rounded-full border-2"
+                                :style="{
+                                    backgroundColor:
+                                        PRIORITY_CONFIG[entry.priority]
+                                            ?.color || '#9CA3AF',
+                                    borderColor:
+                                        PRIORITY_CONFIG[entry.priority]
+                                            ?.color || '#9CA3AF',
+                                }"
+                                aria-hidden="true"
+                            ></span>
 
                             <button
                                 class="flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-bold"
@@ -193,7 +198,7 @@
                     </div>
 
                     <!-- Budget -->
-                    <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center justify-between mb-2">
                         <div>
                             <p class="text-xs text-gray-400">งบประมาณที่เสนอ</p>
                             <p class="text-lg font-bold text-gray-800">
@@ -227,6 +232,110 @@
                         </select>
                     </div>
 
+                    <!-- Budget Progress Bar -->
+                    <div class="mb-3">
+                        <div class="flex justify-between items-center mb-1">
+                            <span
+                                class="text-xs text-emerald-600 font-semibold"
+                            >
+                                ได้รับแล้ว ฿{{
+                                    Number(
+                                        entry.budget_received || 0,
+                                    ).toLocaleString("th-TH")
+                                }}
+                            </span>
+                            <span
+                                class="text-xs font-semibold"
+                                :class="
+                                    Number(entry.budget_received || 0) >=
+                                    Number(entry.budget_requested)
+                                        ? 'text-emerald-600'
+                                        : 'text-blue-500'
+                                "
+                            >
+                                <template
+                                    v-if="
+                                        Number(entry.budget_received || 0) >=
+                                        Number(entry.budget_requested)
+                                    "
+                                >
+                                    ครบแล้ว ✅
+                                </template>
+                                <template v-else>
+                                    ขาดอีก ฿{{
+                                        Math.max(
+                                            0,
+                                            Number(entry.budget_requested) -
+                                                Number(
+                                                    entry.budget_received || 0,
+                                                ),
+                                        ).toLocaleString("th-TH")
+                                    }}
+                                </template>
+                            </span>
+                        </div>
+                        <div
+                            class="w-full bg-gray-100 rounded-full h-2 overflow-hidden"
+                        >
+                            <div
+                                class="h-2 rounded-full transition-all duration-500"
+                                :class="
+                                    Number(entry.budget_received || 0) >=
+                                    Number(entry.budget_requested)
+                                        ? 'bg-emerald-500'
+                                        : 'bg-blue-500'
+                                "
+                                :style="{
+                                    width:
+                                        Math.min(
+                                            100,
+                                            Number(entry.budget_requested) > 0
+                                                ? Math.round(
+                                                      (Number(
+                                                          entry.budget_received ||
+                                                              0,
+                                                      ) /
+                                                          Number(
+                                                              entry.budget_requested,
+                                                          )) *
+                                                          100,
+                                                  )
+                                                : 0,
+                                        ) + '%',
+                                }"
+                            ></div>
+                        </div>
+                        <div class="text-right mt-0.5">
+                            <span
+                                class="text-xs font-bold"
+                                :class="
+                                    Number(entry.budget_received || 0) >=
+                                    Number(entry.budget_requested)
+                                        ? 'text-emerald-600'
+                                        : 'text-blue-500'
+                                "
+                            >
+                                {{
+                                    Number(entry.budget_requested) > 0
+                                        ? Math.min(
+                                              100,
+                                              Math.round(
+                                                  (Number(
+                                                      entry.budget_received ||
+                                                          0,
+                                                  ) /
+                                                      Number(
+                                                          entry.budget_requested,
+                                                      )) *
+                                                      100,
+                                              ),
+                                          )
+                                        : 0
+                                }}%
+                            </span>
+                        </div>
+                    </div>
+
                     <!-- Description preview -->
                     <p
                         class="text-xs text-gray-500 leading-relaxed line-clamp-2 mb-3"
@@ -256,13 +365,6 @@
                             <Pencil class="w-3.5 h-3.5" />
                             แก้ไขข้อมูล
                         </button>
-                        <button
-                            @click="openRemarkModal(entry)"
-                            class="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-amber-50 text-amber-700 rounded-xl text-xs font-semibold border border-amber-100 active:scale-95 transition-all"
-                        >
-                            <MessageSquare class="w-3.5 h-3.5 text-amber-500" />
-                            หมายเหตุ
-                        </button>
                     </div>
                 </div>
             </div>
@@ -291,7 +393,7 @@
                     @click="editModal.open = false"
                 ></div>
                 <div
-                    class="relative w-full max-w-lg lg:max-w-[92vw] lg:w-[92vw] bg-white rounded-t-3xl lg:rounded-3xl shadow-2xl max-h-[92vh] lg:max-h-[92vh] overflow-y-auto"
+                    class="relative w-full max-w-lg lg:max-w-2xl bg-white rounded-t-3xl lg:rounded-3xl shadow-2xl max-h-[92vh] lg:max-h-[88vh] overflow-y-auto"
                 >
                     <!-- Handle -->
                     <div class="flex justify-center pt-3 pb-1">
@@ -370,6 +472,195 @@
                                 </div>
                             </div>
 
+                            <!-- Budget Received -->
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 mb-2"
+                                    >จำนวนเงินที่มีแล้ว (บาท)</label
+                                >
+                                <div class="relative">
+                                    <span
+                                        class="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-600 font-semibold text-sm"
+                                        >฿</span
+                                    >
+                                    <input
+                                        v-model="editForm.budget_received"
+                                        type="number"
+                                        inputmode="numeric"
+                                        min="0"
+                                        class="w-full pl-8 pr-4 py-3 border border-emerald-200 rounded-xl text-base font-bold focus:outline-none focus:ring-4 focus:ring-emerald-100"
+                                    />
+                                </div>
+                            </div>
+
+                            <!-- Status (moved to follow Budget Received) -->
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 mb-2"
+                                    >สถานะ</label
+                                >
+                                <select
+                                    v-model="editForm.status"
+                                    class="w-full px-4 py-3 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-4 focus:ring-blue-100"
+                                    :class="
+                                        getStatusSelectClass(editForm.status)
+                                    "
+                                >
+                                    <option
+                                        v-for="s in statusOptions"
+                                        :key="s"
+                                        :value="s"
+                                    >
+                                        {{ s }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Budget Progress Preview (full width) -->
+                            <div class="col-span-1 lg:col-span-2">
+                                <label
+                                    class="block text-sm font-medium text-gray-700 mb-2"
+                                    >ความคืบหน้างบประมาณ</label
+                                >
+                                <div
+                                    class="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3"
+                                >
+                                    <div
+                                        class="flex justify-between items-center mb-2"
+                                    >
+                                        <span
+                                            class="text-xs font-semibold text-emerald-700"
+                                        >
+                                            ได้รับแล้ว ฿{{
+                                                Number(
+                                                    editForm.budget_received,
+                                                ).toLocaleString("th-TH")
+                                            }}
+                                        </span>
+                                        <span
+                                            class="text-xs font-semibold"
+                                            :class="
+                                                Number(
+                                                    editForm.budget_received,
+                                                ) >=
+                                                Number(
+                                                    editForm.budget_requested,
+                                                )
+                                                    ? 'text-emerald-600'
+                                                    : 'text-blue-500'
+                                            "
+                                        >
+                                            <template
+                                                v-if="
+                                                    Number(
+                                                        editForm.budget_received,
+                                                    ) >=
+                                                    Number(
+                                                        editForm.budget_requested,
+                                                    )
+                                                "
+                                            >
+                                                ครบแล้ว ✅
+                                            </template>
+                                            <template v-else>
+                                                ขาดอีก ฿{{
+                                                    Math.max(
+                                                        0,
+                                                        Number(
+                                                            editForm.budget_requested,
+                                                        ) -
+                                                            Number(
+                                                                editForm.budget_received,
+                                                            ),
+                                                    ).toLocaleString("th-TH")
+                                                }}
+                                            </template>
+                                        </span>
+                                    </div>
+                                    <!-- Progress Bar -->
+                                    <div
+                                        class="w-full bg-gray-200 rounded-full h-3 overflow-hidden"
+                                    >
+                                        <div
+                                            class="h-3 rounded-full transition-all duration-500"
+                                            :class="
+                                                Number(
+                                                    editForm.budget_received,
+                                                ) >=
+                                                Number(
+                                                    editForm.budget_requested,
+                                                )
+                                                    ? 'bg-emerald-500'
+                                                    : 'bg-blue-500'
+                                            "
+                                            :style="{
+                                                width:
+                                                    Math.min(
+                                                        100,
+                                                        Number(
+                                                            editForm.budget_requested,
+                                                        ) > 0
+                                                            ? Math.round(
+                                                                  (Number(
+                                                                      editForm.budget_received,
+                                                                  ) /
+                                                                      Number(
+                                                                          editForm.budget_requested,
+                                                                      )) *
+                                                                      100,
+                                                              )
+                                                            : 0,
+                                                    ) + '%',
+                                            }"
+                                        ></div>
+                                    </div>
+                                    <div class="flex justify-between mt-1.5">
+                                        <span class="text-xs text-gray-400"
+                                            >0%</span
+                                        >
+                                        <span
+                                            class="text-xs font-bold"
+                                            :class="
+                                                Number(
+                                                    editForm.budget_received,
+                                                ) >=
+                                                Number(
+                                                    editForm.budget_requested,
+                                                )
+                                                    ? 'text-emerald-600'
+                                                    : 'text-blue-500'
+                                            "
+                                        >
+                                            {{
+                                                Number(
+                                                    editForm.budget_requested,
+                                                ) > 0
+                                                    ? Math.min(
+                                                          100,
+                                                          Math.round(
+                                                              (Number(
+                                                                  editForm.budget_received,
+                                                              ) /
+                                                                  Number(
+                                                                      editForm.budget_requested,
+                                                                  )) *
+                                                                  100,
+                                                          ),
+                                                      )
+                                                    : 0
+                                            }}%
+                                        </span>
+                                        <span class="text-xs text-gray-400"
+                                            >เป้าหมาย ฿{{
+                                                Number(
+                                                    editForm.budget_requested,
+                                                ).toLocaleString("th-TH")
+                                            }}</span
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Priority -->
                             <div>
                                 <label
@@ -394,28 +685,7 @@
                                 </div>
                             </div>
 
-                            <!-- Status -->
-                            <div>
-                                <label
-                                    class="block text-sm font-medium text-gray-700 mb-2"
-                                    >สถานะ</label
-                                >
-                                <select
-                                    v-model="editForm.status"
-                                    class="w-full px-4 py-3 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-4 focus:ring-blue-100"
-                                    :class="
-                                        getStatusSelectClass(editForm.status)
-                                    "
-                                >
-                                    <option
-                                        v-for="s in statusOptions"
-                                        :key="s"
-                                        :value="s"
-                                    >
-                                        {{ s }}
-                                    </option>
-                                </select>
-                            </div>
+                            <!-- Status moved up next to 'จำนวนเงินที่มีแล้ว' -->
 
                             <!-- Description (full width) -->
                             <div class="col-span-1 lg:col-span-2">
@@ -681,6 +951,7 @@ const editForm = reactive({
     title: "",
     location: "" as Location,
     budget_requested: 0,
+    budget_received: 0,
     priority: "" as Priority,
     status: "" as Status,
     description: "",
@@ -812,11 +1083,11 @@ function getPriorityClass(priority: Priority): string {
 
 function getPriorityActiveClass(priority: Priority | string): string {
     const map: Record<string, string> = {
-        แดง: "border-black bg-red-50 text-red-700",
-        เหลือง: "border-black bg-amber-50 text-amber-700",
-        เขียว: "border-black bg-emerald-50 text-emerald-700",
+        แดง: "border-2 border-black bg-red-50 text-red-700",
+        เหลือง: "border-2 border-black bg-amber-50 text-amber-700",
+        เขียว: "border-2 border-black bg-emerald-50 text-emerald-700",
     };
-    return map[priority] || "border-black bg-blue-50 text-blue-700";
+    return map[priority] || "border-2 border-black bg-blue-50 text-blue-700";
 }
 
 function getStatusClass(status: Status): string {
@@ -899,6 +1170,7 @@ function openEditModal(entry: BudgetEntry) {
     editForm.title = entry.title;
     editForm.location = entry.location;
     editForm.budget_requested = Number(entry.budget_requested);
+    editForm.budget_received = Number(entry.budget_received) || 0;
     editForm.priority = entry.priority;
     editForm.status = entry.status;
     editForm.description = entry.description;
@@ -926,6 +1198,7 @@ async function saveEdit() {
         title: editForm.title.trim(),
         location: editForm.location,
         budget_requested: Number(editForm.budget_requested),
+        budget_received: Number(editForm.budget_received) || 0,
         priority: editForm.priority,
         status: editForm.status,
         description: editForm.description.trim(),

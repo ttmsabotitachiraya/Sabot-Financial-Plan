@@ -13,7 +13,7 @@
 
                 <!-- Bottom Sheet -->
                 <div
-                    class="relative w-full max-w-lg lg:max-w-[92vw] lg:w-[92vw] bg-white rounded-t-3xl lg:rounded-3xl shadow-2xl max-h-[90vh] lg:max-h-[92vh] overflow-y-auto"
+                    class="relative w-full max-w-lg lg:max-w-xl lg:w-[80vw] bg-white rounded-t-3xl lg:rounded-3xl shadow-2xl max-h-[90vh] lg:max-h-[92vh] overflow-y-auto"
                 >
                     <!-- Drag Handle -->
                     <div
@@ -134,6 +134,122 @@
                             <p class="text-xs text-blue-400 mt-0.5">บาท</p>
                         </div>
 
+                        <!-- Budget Received & Progress (shown when status is 'มีเงินแล้ว') -->
+                        <div
+                            v-if="entry.status === 'มีเงินแล้ว'"
+                            class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-4"
+                        >
+                            <div class="flex items-center gap-1.5 mb-1">
+                                <Wallet class="w-4 h-4 text-emerald-500" />
+                                <p
+                                    class="text-xs text-emerald-500 font-semibold uppercase tracking-wide"
+                                >
+                                    งบประมาณที่ได้รับ
+                                </p>
+                            </div>
+                            <p class="text-2xl font-bold text-emerald-700">
+                                ฿{{
+                                    Number(
+                                        entry.budget_received || 0,
+                                    ).toLocaleString("th-TH")
+                                }}
+                            </p>
+                            <p class="text-xs text-emerald-400 mt-0.5">บาท</p>
+
+                            <!-- Progress Bar -->
+                            <div class="mt-3">
+                                <div
+                                    class="w-full bg-gray-100 rounded-full h-2 overflow-hidden"
+                                >
+                                    <div
+                                        class="h-2 rounded-full bg-emerald-500 transition-all duration-500"
+                                        :style="{
+                                            width: entry.budget_requested
+                                                ? Math.min(
+                                                      100,
+                                                      Math.round(
+                                                          (Number(
+                                                              entry.budget_received ||
+                                                                  0,
+                                                          ) /
+                                                              Number(
+                                                                  entry.budget_requested,
+                                                              )) *
+                                                              100,
+                                                      ),
+                                                  )
+                                                : 0 + '%',
+                                        }"
+                                    ></div>
+                                </div>
+
+                                <div
+                                    class="flex justify-between mt-1 text-xs items-center"
+                                >
+                                    <span class="text-gray-400">0%</span>
+                                    <span
+                                        class="font-bold"
+                                        :class="
+                                            Number(
+                                                entry.budget_received || 0,
+                                            ) >= Number(entry.budget_requested)
+                                                ? 'text-emerald-600'
+                                                : 'text-blue-500'
+                                        "
+                                    >
+                                        {{
+                                            entry.budget_requested
+                                                ? Math.min(
+                                                      100,
+                                                      Math.round(
+                                                          (Number(
+                                                              entry.budget_received ||
+                                                                  0,
+                                                          ) /
+                                                              Number(
+                                                                  entry.budget_requested,
+                                                              )) *
+                                                              100,
+                                                      ),
+                                                  )
+                                                : 0
+                                        }}%
+                                    </span>
+                                    <span class="text-gray-400">
+                                        เป้าหมาย ฿{{
+                                            Number(
+                                                entry.budget_requested,
+                                            ).toLocaleString("th-TH")
+                                        }}
+                                    </span>
+                                </div>
+
+                                <div class="mt-2 text-sm text-gray-600">
+                                    <template
+                                        v-if="
+                                            Number(
+                                                entry.budget_received || 0,
+                                            ) >= Number(entry.budget_requested)
+                                        "
+                                    >
+                                        ได้รับงบครบตามที่ขอแล้ว
+                                    </template>
+                                    <template v-else>
+                                        ขาดอีก ฿{{
+                                            Math.max(
+                                                0,
+                                                Number(entry.budget_requested) -
+                                                    Number(
+                                                        entry.budget_received ||
+                                                            0,
+                                                    ),
+                                            ).toLocaleString("th-TH")
+                                        }}
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Description -->
                         <div class="mb-4">
                             <div class="flex items-center gap-1.5 mb-2">
@@ -210,13 +326,7 @@
                                         >
                                             <p
                                                 class="text-sm font-semibold"
-                                                :class="
-                                                    step.active
-                                                        ? step.labelActiveClass
-                                                        : step.completed
-                                                          ? 'text-indigo-600'
-                                                          : 'text-gray-400'
-                                                "
+                                                :class="step.labelClass"
                                             >
                                                 {{ step.label }}
                                             </p>
@@ -288,6 +398,7 @@ import {
     Building2,
     Calendar,
     Banknote,
+    Wallet,
     AlignLeft,
     GitBranch,
     MessageSquare,
@@ -315,7 +426,7 @@ type TimelineStep = {
     active: boolean;
     circleClass: string;
     dotClass: string;
-    labelActiveClass: string;
+    labelClass: string;
 };
 
 const STATUS_ORDER: Status[] = ["รอเงิน", "มีเงินแล้ว", "เสร็จแล้ว"];
@@ -365,14 +476,26 @@ const statusConfig = computed(() => {
 const timelineSteps = computed((): TimelineStep[] => {
     if (!props.entry) return [];
 
-    // Map legacy statuses from sheet/backend into the simplified 4-status model used in UI
+    // Map legacy statuses from sheet/backend into the simplified 4-status model used in UI.
+    // Preserve already-unified statuses so status and timeline stay in sync.
     const rawStatus = props.entry.status as string;
     const mapToFour = (s: string | undefined): Status => {
         if (!s) return "รอเงิน";
-        if (s === "อนุมัติ") return "มีเงินแล้ว";
-        if (s === "ดำเนินการแล้ว") return "เสร็จแล้ว";
-        if (s === "ปฏิเสธ") return "ปฏิเสธ";
-        // default: treat earlier statuses (เสนอใหม่, รอเข้าที่ประชุม, ...) as รอเงิน
+        const t = String(s).trim();
+        // If already one of the unified statuses, return as-is
+        if (
+            t === "รอเงิน" ||
+            t === "มีเงินแล้ว" ||
+            t === "เสร็จแล้ว" ||
+            t === "ปฏิเสธ"
+        ) {
+            return t as Status;
+        }
+        // Map legacy/alternate values into the unified set
+        if (t === "อนุมัติ") return "มีเงินแล้ว";
+        if (t === "ดำเนินการแล้ว") return "เสร็จแล้ว";
+        if (t === "ปฏิเสธ") return "ปฏิเสธ";
+        // Fallback: treat unknown / earlier statuses as waiting for funds
         return "รอเงิน";
     };
 
@@ -413,33 +536,43 @@ const timelineSteps = computed((): TimelineStep[] => {
 
         let circleClass = "border-gray-200 bg-white";
         let dotClass = "bg-gray-500";
-        let labelActiveClass = "text-gray-700";
+        // default label color should be muted gray so 'รอเงิน' appears gray by default
+        let labelClass = "text-gray-400";
 
         if (completed) {
             // completed color depends on the step
             if (status === "มีเงินแล้ว") {
                 circleClass = "border-emerald-500 bg-emerald-500 text-white";
+                labelClass = "text-emerald-600";
             } else if (status === "เสร็จแล้ว") {
                 circleClass = "border-blue-500 bg-blue-500 text-white";
+                labelClass = "text-indigo-600";
             } else {
                 circleClass = "border-gray-500 bg-gray-500 text-white";
+                labelClass = "text-gray-400";
             }
         } else if (active) {
             // active step outlined
             if (status === "มีเงินแล้ว") {
                 circleClass = "border-emerald-500 bg-white";
                 dotClass = "bg-emerald-500";
-                labelActiveClass = "text-emerald-700";
+                labelClass = "text-emerald-700";
             } else if (status === "เสร็จแล้ว") {
                 circleClass = "border-blue-500 bg-white";
                 dotClass = "bg-blue-500";
-                labelActiveClass = "text-blue-700";
+                labelClass = "text-blue-700";
             } else if (status === "ปฏิเสธ") {
                 circleClass = "border-gray-300 bg-white";
                 dotClass = "bg-gray-500";
-                labelActiveClass = "text-gray-700";
+                labelClass = "text-gray-700";
+            } else if (status === "รอเงิน") {
+                // ensure 'รอเงิน' label remains muted gray when active
+                circleClass = "border-gray-300 bg-white";
+                dotClass = "bg-gray-400";
+                labelClass = "text-gray-400";
             } else {
                 circleClass = "border-gray-300 bg-white";
+                labelClass = "text-gray-400";
             }
         }
 
@@ -450,7 +583,7 @@ const timelineSteps = computed((): TimelineStep[] => {
             active,
             circleClass,
             dotClass,
-            labelActiveClass,
+            labelClass,
         };
     });
 

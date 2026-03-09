@@ -18,6 +18,7 @@ export interface BudgetEntry {
   title: string;
   location: Location;
   budget_requested: number;
+  budget_received?: number;
   priority: Priority;
   description: string;
   status: Status;

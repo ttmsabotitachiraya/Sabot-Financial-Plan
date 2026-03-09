@@ -11,12 +11,23 @@
                 >
                     {{ entry.title }}
                 </h3>
-                <span
-                    class="flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap"
-                    :class="statusConfig.bgColor + ' ' + statusConfig.textColor"
-                >
-                    {{ entry.status }}
-                </span>
+                <div class="flex items-center gap-3">
+                    <span
+                        class="w-5 h-5 rounded-full border-2"
+                        :style="{
+                            backgroundColor: priorityConfig.color,
+                            borderColor: priorityConfig.color,
+                        }"
+                    ></span>
+                    <span
+                        class="flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap"
+                        :class="
+                            statusConfig.bgColor + ' ' + statusConfig.textColor
+                        "
+                    >
+                        {{ entry.status }}
+                    </span>
+                </div>
             </div>
 
             <!-- Meta Row -->
@@ -38,7 +49,7 @@
 
             <!-- Bottom Row: Budget + Priority -->
             <div
-                class="flex items-center justify-between pt-3 border-t border-gray-50"
+                class="flex items-center justify-between pt-3 border-t border-gray-50 mb-3"
             >
                 <!-- Budget -->
                 <div class="flex items-center gap-1.5">
@@ -48,20 +59,61 @@
                     </span>
                 </div>
 
-                <!-- Priority Badge -->
-                <span
-                    class="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border"
-                    :class="
-                        priorityConfig.bgColor +
-                        ' ' +
-                        priorityConfig.textColor +
-                        ' ' +
-                        priorityConfig.borderColor
-                    "
+                <!-- Priority (displayed as color dot next to status in the top row) -->
+                <span class="sr-only"
+                    >Priority: {{ priorityConfig.label }}</span
                 >
-                    {{ priorityConfig.emoji }}
-                    {{ priorityConfig.label }}
-                </span>
+            </div>
+
+            <!-- Budget Progress Bar -->
+            <div class="mb-1">
+                <div class="flex justify-between items-center mb-1">
+                    <span
+                        class="text-xs text-emerald-600 font-semibold flex items-center gap-1"
+                    >
+                        <Wallet class="w-3 h-3" />
+                        ได้รับแล้ว ฿{{ formattedBudgetReceived }}
+                    </span>
+                    <span
+                        class="text-xs font-semibold"
+                        :class="
+                            budgetComplete
+                                ? 'text-emerald-600'
+                                : 'text-blue-500'
+                        "
+                    >
+                        <template v-if="budgetComplete">ครบแล้ว ✅</template>
+                        <template v-else
+                            >ขาดอีก ฿{{ formattedBudgetShortfall }}</template
+                        >
+                    </span>
+                </div>
+                <div
+                    class="w-full bg-gray-100 rounded-full h-2 overflow-hidden"
+                >
+                    <div
+                        class="h-2 rounded-full transition-all duration-500"
+                        :class="
+                            budgetComplete ? 'bg-emerald-500' : 'bg-blue-500'
+                        "
+                        :style="{ width: budgetPercent + '%' }"
+                    ></div>
+                </div>
+                <div class="flex justify-between mt-1">
+                    <span class="text-xs text-gray-400">0%</span>
+                    <span
+                        class="text-xs font-bold"
+                        :class="
+                            budgetComplete
+                                ? 'text-emerald-600'
+                                : 'text-blue-500'
+                        "
+                        >{{ budgetPercent }}%</span
+                    >
+                    <span class="text-xs text-gray-400"
+                        >฿{{ formattedBudget }}</span
+                    >
+                </div>
             </div>
 
             <!-- Admin Remark (if any) -->
@@ -82,7 +134,13 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { Building2, Calendar, Banknote, MessageSquare } from "lucide-vue-next";
+import {
+    Building2,
+    Calendar,
+    Banknote,
+    MessageSquare,
+    Wallet,
+} from "lucide-vue-next";
 import type { BudgetEntry } from "../types";
 import { PRIORITY_CONFIG, STATUS_CONFIG } from "../types";
 
@@ -124,10 +182,42 @@ const formattedBudget = computed(() => {
     const val = Number(props.entry.budget_requested);
     if (isNaN(val)) return "0";
     try {
-        // Format with thousand separators like 500,000
         return new Intl.NumberFormat("en-US").format(val);
     } catch {
         return String(val);
+    }
+});
+
+const formattedBudgetReceived = computed(() => {
+    const val = Number(props.entry.budget_received) || 0;
+    try {
+        return new Intl.NumberFormat("en-US").format(val);
+    } catch {
+        return String(val);
+    }
+});
+
+const budgetPercent = computed(() => {
+    const requested = Number(props.entry.budget_requested) || 0;
+    const received = Number(props.entry.budget_received) || 0;
+    if (requested <= 0) return 0;
+    return Math.min(100, Math.round((received / requested) * 100));
+});
+
+const budgetComplete = computed(() => {
+    const requested = Number(props.entry.budget_requested) || 0;
+    const received = Number(props.entry.budget_received) || 0;
+    return received >= requested;
+});
+
+const formattedBudgetShortfall = computed(() => {
+    const requested = Number(props.entry.budget_requested) || 0;
+    const received = Number(props.entry.budget_received) || 0;
+    const shortfall = Math.max(0, requested - received);
+    try {
+        return new Intl.NumberFormat("en-US").format(shortfall);
+    } catch {
+        return String(shortfall);
     }
 });
 
