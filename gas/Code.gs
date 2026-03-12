@@ -191,14 +191,54 @@ function rowToObject(row) {
   const obj = {};
   HEADERS.forEach((key, idx) => {
     let val = row[idx];
+
     // Convert budget to number
     if (key === "budget_requested" || key === "budget_received") {
       val = Number(val) || 0;
     }
-    // Convert timestamp Date object to dd/mm/yyyy hh:mm format for consistent display
-    if (key === "timestamp" && val instanceof Date) {
-      val = formatDate(val);
+
+    // Normalize timestamp values into ISO 8601 strings so clients can parse reliably.
+    // Handle:
+    //  - native Date objects (from Sheets)
+    //  - legacy string formats like "dd/mm/yyyy hh:mm" or "d/m/yy hh:mm"
+    if (key === "timestamp") {
+      // If Sheets returned a Date object, convert to ISO
+      if (val instanceof Date) {
+        val = val.toISOString();
+      } else if (typeof val === "string" && val.trim() !== "") {
+        // Try to parse common dd/mm/yyyy hh:mm (and dd/mm/yy) patterns robustly.
+        // Accept separators: / - . or space between date parts.
+        const m = val.match(/^\s*(\d{1,2})[\/\-\.\s](\d{1,2})[\/\-\.\s](\d{2,4})\s+(\d{1,2}):(\d{2})\s*$/);
+        if (m) {
+          let day = parseInt(m[1], 10);
+          let month = parseInt(m[2], 10);
+          let year = parseInt(m[3], 10);
+          const hour = parseInt(m[4], 10);
+          const minute = parseInt(m[5], 10);
+
+          // Normalize 2-digit years to a reasonable 4-digit year.
+          // Heuristic:
+          //  - 00..69 => 2000..2069
+          //  - 70..99 => 1970..1999
+          if (year >= 0 && year <= 99) {
+            year = year <= 69 ? 2000 + year : 1900 + year;
+          }
+
+          // Basic validation: create a Date in local timezone (consistent with how users expect times)
+          try {
+            const parsed = new Date(year, month - 1, day, hour, minute);
+            if (!isNaN(parsed.getTime())) {
+              val = parsed.toISOString();
+            }
+            // If parsed is invalid, fall through and leave original string value
+          } catch (e) {
+            // leave val unchanged (client will receive original string)
+          }
+        }
+        // If regex didn't match, leave val as-is (client may already have an ISO string or another format)
+      }
     }
+
     obj[key] = val !== undefined && val !== null ? val : "";
   });
   return obj;
@@ -254,7 +294,7 @@ function createEntry(data) {
 
   const sheet = getSheet();
   const id = generateId();
-  const timestamp = formatDate(new Date());
+  const timestamp = new Date().toISOString();
   // Default new-status value (store new entries under the simplified status)
   const status = "รอเงิน";
   const admin_remark = "";
